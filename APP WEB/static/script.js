@@ -10,6 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalImage = document.getElementById('modalImage');
     const closeModal = document.getElementById('closeModal');
     const selectedFilesCount = document.getElementById('selectedFilesCount');
+    const editModeContainer = document.getElementById('editModeContainer');
+    const editModeSwitch = document.getElementById('editModeSwitch');
+
+    let resultados = [];
+    let editMode = false;
 
     // Drag and drop functionality
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -54,6 +59,12 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedFilesCount.classList.remove('hidden');
     }
 
+    // Agregar event listener para el switch de modo edición
+    editModeSwitch.addEventListener('change', () => {
+        editMode = editModeSwitch.checked;
+        mostrarResultados(resultados);
+    });
+
     subirBtn.addEventListener('click', async () => {
         const archivos = imagenInput.files;
         if (archivos.length === 0) {
@@ -73,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
         loadingSpinner.classList.remove('hidden');
         resultadosContainer.innerHTML = '';
 
-        const resultados = [];
+        resultados = []; // Reiniciar resultados
         for (let i = 0; i < archivos.length; i++) {
             try {
                 const resultado = await procesarArchivo(archivos[i]);
@@ -88,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         loadingSpinner.classList.add('hidden');
+        editModeContainer.classList.remove('hidden');
         mostrarResultados(resultados);
     });
 
@@ -122,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const tbody = tabla.createTBody();
-        resultados.forEach(item => {
+        resultados.forEach((item, index) => {
             const row = tbody.insertRow();
             row.className = 'bg-white';
 
@@ -138,15 +150,20 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             celdaNombre.appendChild(link);
 
-            [
-                item.fecha_factura || '-',
-                item.numero_factura || '-',
-                item.importe_total || '-',
-                item.base_imponible || '-',
-                item.iva || '-'
-            ].forEach(text => {
+            ['fecha_factura', 'numero_factura', 'importe_total', 'base_imponible', 'iva'].forEach(field => {
                 const cell = row.insertCell();
-                cell.textContent = text;
+                if (editMode) {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = item[field] || '-';
+                    input.className = 'w-full px-2 py-1 border rounded';
+                    input.onchange = (e) => {
+                        resultados[index][field] = e.target.value;
+                    };
+                    cell.appendChild(input);
+                } else {
+                    cell.textContent = item[field] || '-';
+                }
                 cell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
             });
 
