@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectedFilesCount = document.getElementById('selectedFilesCount');
     const editModeContainer = document.getElementById('editModeContainer');
     const editModeSwitch = document.getElementById('editModeSwitch');
+    const exportToExcelBtn = document.getElementById('exportToExcelBtn');
 
     let resultados = [];
     let editMode = false;
@@ -174,6 +175,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         resultadosContainer.appendChild(tabla);
         mostrarMensaje('Procesamiento completado', 'success');
+        
+        // Show the Export to Excel button after results are displayed
+        exportToExcelBtn.classList.remove('hidden');
     }
 
     function mostrarMensaje(mensaje, tipo) {
@@ -202,6 +206,28 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !imageModal.classList.contains('hidden')) {
             closeModalFunction();
+        }
+    });
+
+    // Add event listener for the Export to Excel button
+    exportToExcelBtn.addEventListener('click', async () => {
+        try {
+            const response = await fetch('/export-to-excel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(resultados),
+            });
+
+            if (response.ok) {
+                mostrarMensaje('Datos exportados a Excel exitosamente', 'success');
+            } else {
+                mostrarMensaje('Error al exportar a Excel', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarMensaje('Error al exportar a Excel', 'error');
         }
     });
 });

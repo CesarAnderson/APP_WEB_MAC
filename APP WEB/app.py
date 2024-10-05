@@ -5,7 +5,9 @@ import fitz
 from PIL import Image
 from io import BytesIO
 from werkzeug.utils import secure_filename
-#holaaa
+import openpyxl
+from openpyxl import load_workbook
+
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -91,6 +93,33 @@ def index():
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/export-to-excel', methods=['POST'])
+def export_to_excel():
+    data = request.json
+    
+    # Load the existing Excel file
+    wb = load_workbook('Facturas.xlsx')
+    ws = wb['Hoja1']
+    
+    # Find the last row with data
+    last_row = ws.max_row
+    
+    # Add new rows
+    for row in data:
+        ws.append([
+            row['filename'],
+            row['fecha_factura'],
+            row['numero_factura'],
+            row['importe_total'],
+            row['base_imponible'],
+            row['iva']
+        ])
+    
+    # Save the workbook
+    wb.save('Facturas.xlsx')
+    
+    return jsonify({"message": "Data exported successfully"}), 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8080)
