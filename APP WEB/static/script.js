@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageModal = document.getElementById('imageModal');
     const modalImage = document.getElementById('modalImage');
     const closeModal = document.getElementById('closeModal');
+    const selectedFilesCount = document.getElementById('selectedFilesCount');
 
     // Drag and drop functionality
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -42,6 +43,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const dt = e.dataTransfer;
         const files = dt.files;
         imagenInput.files = files;
+        updateSelectedFilesCount();
+    }
+
+    imagenInput.addEventListener('change', updateSelectedFilesCount);
+
+    function updateSelectedFilesCount() {
+        const fileCount = imagenInput.files.length;
+        selectedFilesCount.textContent = `${fileCount} archivo${fileCount !== 1 ? 's' : ''} seleccionado${fileCount !== 1 ? 's' : ''}`;
+        selectedFilesCount.classList.remove('hidden');
     }
 
     subirBtn.addEventListener('click', async () => {
@@ -159,8 +169,22 @@ document.addEventListener('DOMContentLoaded', () => {
         mensajeExito.classList.remove('hidden');
     }
 
-    closeModal.addEventListener('click', () => {
+    function closeModalFunction() {
         imageModal.classList.add('hidden');
         imageModal.classList.remove('flex');
+    }
+
+    closeModal.addEventListener('click', closeModalFunction);
+
+    imageModal.addEventListener('click', (e) => {
+        if (e.target === imageModal) {
+            closeModalFunction();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !imageModal.classList.contains('hidden')) {
+            closeModalFunction();
+        }
     });
 });
