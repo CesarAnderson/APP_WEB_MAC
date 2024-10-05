@@ -11,7 +11,7 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-genai.configure(api_key="AIzaSyBjrMOyUof_kb3sZNwSc9msSBHLgOSyz68")
+genai.configure(api_key="AIzaSyANGD5y7dErSN4FhDZdM0_rfUtBFB-8iR8")
 model = genai.GenerativeModel("gemini-1.5-flash-001")
 
 def convert_pdf_to_jpg(pdf_path):
