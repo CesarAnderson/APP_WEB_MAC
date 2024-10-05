@@ -5,7 +5,7 @@ import fitz
 from PIL import Image
 from io import BytesIO
 from werkzeug.utils import secure_filename
-
+#holaaa
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
