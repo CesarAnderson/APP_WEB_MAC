@@ -1,4 +1,4 @@
-// script.jsprueba
+// script.js
 document.addEventListener('DOMContentLoaded', () => {
     const imagenInput = document.getElementById('imagenInput');
     const subirBtn = document.getElementById('subirBtn');
