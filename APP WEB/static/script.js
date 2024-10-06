@@ -1,25 +1,26 @@
-// script.js
 document.addEventListener('DOMContentLoaded', () => {
-    const imagenInput = document.getElementById('imagenInput');
-    const subirBtn = document.getElementById('subirBtn');
-    const mensajeExito = document.getElementById('mensajeExito');
-    const resultadosContainer = document.getElementById('resultadosContainer');
-    const loadingSpinner = document.getElementById('loadingSpinner');
-    const dropArea = document.getElementById('dropArea');
-    const imageModal = document.getElementById('imageModal');
-    const modalImage = document.getElementById('modalImage');
-    const closeModal = document.getElementById('closeModal');
-    const selectedFilesCount = document.getElementById('selectedFilesCount');
-    const editModeContainer = document.getElementById('editModeContainer');
-    const editModeSwitch = document.getElementById('editModeSwitch');
-    const exportToExcelBtn = document.getElementById('exportToExcelBtn');
+    const elements = {
+        imagenInput: document.getElementById('imagenInput'),
+        subirBtn: document.getElementById('subirBtn'),
+        mensajeExito: document.getElementById('mensajeExito'),
+        resultadosContainer: document.getElementById('resultadosContainer'),
+        loadingSpinner: document.getElementById('loadingSpinner'),
+        dropArea: document.getElementById('dropArea'),
+        imageModal: document.getElementById('imageModal'),
+        modalImage: document.getElementById('modalImage'),
+        closeModal: document.getElementById('closeModal'),
+        selectedFilesCount: document.getElementById('selectedFilesCount'),
+        editModeSwitch: document.getElementById('editModeSwitch'),
+        exportToExcelBtn: document.getElementById('exportToExcelBtn'),
+        agregarFilaBtn: document.getElementById('agregarFilaBtn')
+    };
 
     let resultados = [];
     let editMode = false;
 
     // Drag and drop functionality
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, preventDefaults, false);
+        elements.dropArea.addEventListener(eventName, preventDefaults, false);
     });
 
     function preventDefaults(e) {
@@ -28,52 +29,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     ['dragenter', 'dragover'].forEach(eventName => {
-        dropArea.addEventListener(eventName, highlight, false);
+        elements.dropArea.addEventListener(eventName, () => elements.dropArea.classList.add('bg-blue-100'), false);
     });
 
     ['dragleave', 'drop'].forEach(eventName => {
-        dropArea.addEventListener(eventName, unhighlight, false);
+        elements.dropArea.addEventListener(eventName, () => elements.dropArea.classList.remove('bg-blue-100'), false);
     });
 
-    function highlight() {
-        dropArea.classList.add('bg-blue-100');
-    }
-
-    function unhighlight() {
-        dropArea.classList.remove('bg-blue-100');
-    }
-
-    dropArea.addEventListener('drop', handleDrop, false);
+    elements.dropArea.addEventListener('drop', handleDrop, false);
 
     function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-        imagenInput.files = files;
+        elements.imagenInput.files = e.dataTransfer.files;
         updateSelectedFilesCount();
     }
 
-    imagenInput.addEventListener('change', updateSelectedFilesCount);
+    elements.imagenInput.addEventListener('change', updateSelectedFilesCount);
 
     function updateSelectedFilesCount() {
-        const fileCount = imagenInput.files.length;
-        selectedFilesCount.textContent = `${fileCount} archivo${fileCount !== 1 ? 's' : ''} seleccionado${fileCount !== 1 ? 's' : ''}`;
-        selectedFilesCount.classList.remove('hidden');
+        const fileCount = elements.imagenInput.files.length;
+        elements.selectedFilesCount.textContent = `${fileCount} archivo${fileCount !== 1 ? 's' : ''} seleccionado${fileCount !== 1 ? 's' : ''}`;
+        elements.selectedFilesCount.classList.remove('hidden');
     }
 
-    // Agregar event listener para el switch de modo edición
-    editModeSwitch.addEventListener('change', () => {
-        editMode = editModeSwitch.checked;
+    elements.editModeSwitch.addEventListener('change', () => {
+        editMode = elements.editModeSwitch.checked;
         mostrarResultados(resultados);
     });
 
-    subirBtn.addEventListener('click', async () => {
-        const archivos = imagenInput.files;
+    elements.subirBtn.addEventListener('click', handleFileUpload);
+    elements.agregarFilaBtn.addEventListener('click', agregarFila);
+
+    async function handleFileUpload() {
+        const archivos = elements.imagenInput.files;
         if (archivos.length === 0) {
             mostrarMensaje('Por favor, seleccione al menos un archivo.', 'error');
             return;
         }
 
-        // Validate file types
         const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
         const invalidFiles = Array.from(archivos).filter(file => !validTypes.includes(file.type));
         if (invalidFiles.length > 0) {
@@ -82,49 +74,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         mostrarMensaje('Procesando archivos...', 'info');
-        loadingSpinner.classList.remove('hidden');
-        resultadosContainer.innerHTML = '';
+        elements.loadingSpinner.classList.remove('hidden');
+        elements.resultadosContainer.innerHTML = '';
 
-        resultados = []; // Reiniciar resultados
-        for (let i = 0; i < archivos.length; i++) {
-            try {
-                const resultado = await procesarArchivo(archivos[i]);
-                resultados.push(resultado);
-            } catch (error) {
-                console.error('Error al procesar archivo:', error);
-                resultados.push({
-                    filename: archivos[i].name,
-                    error: 'Error al procesar el archivo'
-                });
-            }
-        }
+        resultados = await Promise.all(Array.from(archivos).map(procesarArchivo));
 
-        loadingSpinner.classList.add('hidden');
-        editModeContainer.classList.remove('hidden');
+        elements.loadingSpinner.classList.add('hidden');
         mostrarResultados(resultados);
-    });
+        elements.exportToExcelBtn.classList.remove('hidden');
+    }
 
     async function procesarArchivo(archivo) {
         const formData = new FormData();
         formData.append('imagen', archivo);
         formData.append('filename', archivo.name);
 
-        const response = await fetch('/', {
-            method: 'POST',
-            body: formData
-        });
+        try {
+            const response = await fetch('/', {
+                method: 'POST',
+                body: formData
+            });
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error al procesar archivo:', error);
+            return {
+                filename: archivo.name,
+                error: 'Error al procesar el archivo'
+            };
         }
-
-        return await response.json();
     }
 
     function mostrarResultados(resultados) {
-        resultadosContainer.innerHTML = '';
         const tabla = document.createElement('table');
         tabla.className = 'min-w-full divide-y divide-gray-200';
+        
         const thead = tabla.createTHead();
         const headerRow = thead.insertRow();
         ['Archivo', 'Fecha', 'Número', 'Importe', 'Base Imponible', 'IVA', 'Estado'].forEach(text => {
@@ -136,81 +124,112 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const tbody = tabla.createTBody();
         resultados.forEach((item, index) => {
-            const row = tbody.insertRow();
-            row.className = 'bg-white';
-
-            const celdaNombre = row.insertCell();
-            const link = document.createElement('a');
-            link.textContent = item.filename;
-            link.className = 'text-blue-600 hover:text-blue-900 cursor-pointer';
-            link.onclick = () => {
-                modalImage.src = item.imageUrl || '';
-                modalImage.alt = item.filename;
-                imageModal.classList.remove('hidden');
-                imageModal.classList.add('flex');
-            };
-            celdaNombre.appendChild(link);
-
-            ['fecha_factura', 'numero_factura', 'importe_total', 'base_imponible', 'iva'].forEach(field => {
-                const cell = row.insertCell();
-                if (editMode) {
-                    const input = document.createElement('input');
-                    input.type = 'text';
-                    input.value = item[field] || '-';
-                    input.className = 'w-full px-2 py-1 border rounded';
-                    input.onchange = (e) => {
-                        resultados[index][field] = e.target.value;
-                    };
-                    cell.appendChild(input);
-                } else {
-                    cell.textContent = item[field] || '-';
-                }
-                cell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
-            });
-
-            const estadoCell = row.insertCell();
-            estadoCell.textContent = item.error ? 'Error' : 'Procesado';
-            estadoCell.className = `px-6 py-4 whitespace-nowrap text-sm ${item.error ? 'text-red-500' : 'text-green-500'}`;
+            const row = crearFila(item, index);
+            tbody.appendChild(row);
         });
 
-        resultadosContainer.appendChild(tabla);
+        elements.resultadosContainer.innerHTML = '';
+        elements.resultadosContainer.appendChild(tabla);
         mostrarMensaje('Procesamiento completado', 'success');
-        
-        // Show the Export to Excel button after results are displayed
-        exportToExcelBtn.classList.remove('hidden');
+        elements.exportToExcelBtn.classList.remove('hidden');
+        elements.agregarFilaBtn.classList.remove('hidden');
+    }
+
+    function crearFila(item, index) {
+        const row = document.createElement('tr');
+        row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+
+        const celdaNombre = row.insertCell();
+        const link = document.createElement('a');
+        link.textContent = item.filename || '-';
+        link.className = 'text-blue-600 hover:text-blue-900 cursor-pointer';
+        link.onclick = () => item.imageUrl ? mostrarImagen(item) : null;
+        celdaNombre.appendChild(link);
+
+        ['fecha_factura', 'numero_factura', 'importe_total', 'base_imponible', 'iva'].forEach(field => {
+            const cell = row.insertCell();
+            if (editMode) {
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = item[field] || '';
+                input.className = 'w-full px-2 py-1 border rounded';
+                input.onchange = (e) => {
+                    resultados[index][field] = e.target.value;
+                };
+                cell.appendChild(input);
+            } else {
+                cell.textContent = item[field] || '-';
+            }
+            cell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+        });
+
+        const estadoCell = row.insertCell();
+        estadoCell.textContent = item.error ? 'Error' : (item.manuallyAdded ? 'Manual' : 'Procesado');
+        estadoCell.className = `px-6 py-4 whitespace-nowrap text-sm ${item.error ? 'text-red-500' : (item.manuallyAdded ? 'text-blue-500' : 'text-green-500')}`;
+
+        return row;
+    }
+
+    function agregarFila() {
+        const nuevaFila = {
+            filename: '',
+            fecha_factura: '',
+            numero_factura: '',
+            importe_total: '',
+            base_imponible: '',
+            iva: '',
+            manuallyAdded: true
+        };
+        resultados.push(nuevaFila);
+        const tabla = elements.resultadosContainer.querySelector('table');
+        if (tabla) {
+            const tbody = tabla.querySelector('tbody');
+            const row = crearFila(nuevaFila, resultados.length - 1);
+            tbody.appendChild(row);
+        } else {
+            mostrarResultados(resultados);
+        }
+        elements.exportToExcelBtn.classList.remove('hidden');
     }
 
     function mostrarMensaje(mensaje, tipo) {
-        mensajeExito.textContent = mensaje;
-        mensajeExito.className = `p-4 mb-6 rounded-lg ${
+        elements.mensajeExito.textContent = mensaje;
+        elements.mensajeExito.className = `p-4 mb-6 rounded-lg ${
             tipo === 'error' ? 'bg-red-100 text-red-700 border-l-4 border-red-500' :
             tipo === 'success' ? 'bg-green-100 text-green-700 border-l-4 border-green-500' :
             'bg-blue-100 text-blue-700 border-l-4 border-blue-500'
         }`;
-        mensajeExito.classList.remove('hidden');
+        elements.mensajeExito.classList.remove('hidden');
     }
 
-    function closeModalFunction() {
-        imageModal.classList.add('hidden');
-        imageModal.classList.remove('flex');
+    function mostrarImagen(item) {
+        elements.modalImage.src = item.imageUrl || '';
+        elements.modalImage.alt = item.filename;
+        elements.imageModal.classList.remove('hidden');
+        elements.imageModal.classList.add('flex');
     }
 
-    closeModal.addEventListener('click', closeModalFunction);
+    function cerrarModal() {
+        elements.imageModal.classList.add('hidden');
+        elements.imageModal.classList.remove('flex');
+    }
 
-    imageModal.addEventListener('click', (e) => {
-        if (e.target === imageModal) {
-            closeModalFunction();
+    elements.closeModal.addEventListener('click', cerrarModal);
+    elements.imageModal.addEventListener('click', (e) => {
+        if (e.target === elements.imageModal) {
+            cerrarModal();
         }
     });
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !imageModal.classList.contains('hidden')) {
-            closeModalFunction();
+        if (e.key === 'Escape' && !elements.imageModal.classList.contains('hidden')) {
+            cerrarModal();
         }
     });
 
-    // Add event listener for the Export to Excel button
-    exportToExcelBtn.addEventListener('click', async () => {
+    elements.exportToExcelBtn.addEventListener('click', exportarAExcel);
+
+    async function exportarAExcel() {
         try {
             const response = await fetch('/export-to-excel', {
                 method: 'POST',
@@ -229,5 +248,5 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error:', error);
             mostrarMensaje('Error al exportar a Excel', 'error');
         }
-    });
+    }
 });

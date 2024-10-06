@@ -8,7 +8,7 @@
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto px-4 py-8">
-        <h1 class="text-3xl font-bold mb-6">Extractor de Información de Facturas</h1>
+        <h1 class="text-3xl font-bold mb-6 text-center">Extractor de Información de Facturas</h1>
         <div class="mb-6">
             <div id="dropArea" class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition duration-300">
                 <p class="text-gray-600 mb-2">Arrastra y suelta archivos aquí o</p>
@@ -19,31 +19,38 @@
             </div>
             <p id="selectedFilesCount" class="mt-2 text-sm text-gray-600 hidden"></p>
         </div>
-        <button id="subirBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-300">
-            Procesar Archivos
-        </button>
+        <div class="flex justify-between items-center mb-4">
+            <button id="subirBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-300">
+                Procesar Archivos
+            </button>
+            <div class="flex items-center">
+                <span class="mr-3 text-sm font-medium text-gray-900">Modo edición</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="editModeSwitch" class="sr-only peer">
+                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                </label>
+            </div>
+        </div>
         <div id="mensajeExito" class="mt-4 p-4 rounded-lg hidden"></div>
         <div id="loadingSpinner" class="hidden mt-4 text-center">
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
             <p class="mt-2 text-gray-600">Procesando archivos...</p>
         </div>
-        <div id="editModeContainer" class="mt-4 mb-4 flex items-center hidden">
-            <span class="mr-3 text-sm font-medium text-gray-900">Modo edición</span>
-            <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" id="editModeSwitch" class="sr-only peer">
-                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-        </div>
-        <button id="exportToExcelBtn" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300 hidden">
-            Exportar a Excel
-        </button>
         <div id="resultadosContainer" class="mt-6"></div>
+        <div class="mt-4 flex justify-between">
+            <button id="agregarFilaBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded transition duration-300">
+                Agregar Fila
+            </button>
+            <button id="exportToExcelBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300 hidden">
+                Exportar a Excel
+            </button>
+        </div>
     </div>
-    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
-        <div class="bg-white p-4 rounded-lg max-w-3xl max-h-full overflow-auto">
+    <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white p-4 rounded-lg max-w-3xl max-h-full overflow-auto relative">
             <img id="modalImage" src="" alt="Imagen ampliada" class="max-w-full h-auto">
-            <button id="closeModal" class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded transition duration-300">
-                Cerrar
+            <button id="closeModal" class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded transition duration-300">
+                &times;
             </button>
         </div>
     </div>
