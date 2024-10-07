@@ -183,6 +183,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
 
+                // Agregar funcionalidad Alt+Enter
+                if (field === 'importe_total') {
+                    input.addEventListener('keydown', (e) => {
+                        if (e.altKey && e.key === 'Enter') {
+                            e.preventDefault();
+                            agregarFila();
+                            // Encuentra la primera celda de la nueva fila y enfócala
+                            const nuevaFila = row.nextElementSibling;
+                            if (nuevaFila) {
+                                const primerInput = nuevaFila.querySelector('input');
+                                if (primerInput) {
+                                    primerInput.focus();
+                                }
+                            }
+                        }
+                    });
+                }
+
                 cell.appendChild(input);
             } else {
                 cell.textContent = item[field] || '-';
@@ -222,6 +240,11 @@ document.addEventListener('DOMContentLoaded', () => {
             const tbody = tabla.querySelector('tbody');
             const row = crearFila(nuevaFila, resultados.length - 1);
             tbody.appendChild(row);
+            // Enfocar el primer input de la nueva fila
+            const primerInput = row.querySelector('input');
+            if (primerInput) {
+                primerInput.focus();
+            }
         } else {
             mostrarResultados(resultados);
         }
