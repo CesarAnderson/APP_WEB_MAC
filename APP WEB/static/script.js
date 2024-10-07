@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const thead = tabla.createTHead();
         const headerRow = thead.insertRow();
-        ['Archivo', 'Fecha', 'Número', 'Importe', 'Base Imponible', 'IVA', 'Estado'].forEach(text => {
+        ['Fecha', 'Número', 'Codigo Empresa', 'Tipo de Gasto', 'Base Imponible', 'IVA', 'Importe', 'Archivo', 'Estado'].forEach(text => {
             const th = document.createElement('th');
             th.className = 'px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider';
             th.textContent = text;
@@ -139,14 +139,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = document.createElement('tr');
         row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
 
-        const celdaNombre = row.insertCell();
-        const link = document.createElement('a');
-        link.textContent = item.filename || '-';
-        link.className = 'text-blue-600 hover:text-blue-900 cursor-pointer';
-        link.onclick = () => item.imageUrl ? mostrarImagen(item) : null;
-        celdaNombre.appendChild(link);
-
-        ['fecha_factura', 'numero_factura', 'importe_total', 'base_imponible', 'iva'].forEach(field => {
+        const fields = ['fecha_factura', 'numero_factura', 'codigo_empresa', 'tipo_gasto', 'base_imponible', 'iva', 'importe_total'];
+        
+        fields.forEach(field => {
             const cell = row.insertCell();
             if (editMode) {
                 const input = document.createElement('input');
@@ -163,6 +158,13 @@ document.addEventListener('DOMContentLoaded', () => {
             cell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
         });
 
+        const celdaNombre = row.insertCell();
+        const link = document.createElement('a');
+        link.textContent = item.filename || '-';
+        link.className = 'text-blue-600 hover:text-blue-900 cursor-pointer';
+        link.onclick = () => item.imageUrl ? mostrarImagen(item) : null;
+        celdaNombre.appendChild(link);
+
         const estadoCell = row.insertCell();
         estadoCell.textContent = item.error ? 'Error' : (item.manuallyAdded ? 'Manual' : 'Procesado');
         estadoCell.className = `px-6 py-4 whitespace-nowrap text-sm ${item.error ? 'text-red-500' : (item.manuallyAdded ? 'text-blue-500' : 'text-green-500')}`;
@@ -175,9 +177,11 @@ document.addEventListener('DOMContentLoaded', () => {
             filename: '',
             fecha_factura: '',
             numero_factura: '',
-            importe_total: '',
+            codigo_empresa: '',
+            tipo_gasto: '',
             base_imponible: '',
             iva: '',
+            importe_total: '',
             manuallyAdded: true
         };
         resultados.push(nuevaFila);

@@ -75,9 +75,11 @@ def index():
                     "filename": filename,
                     "fecha_factura": fecha_factura,
                     "numero_factura": numero_factura,
-                    "importe_total": importe_total,
+                    "codigo_empresa": "",
+                    "tipo_gasto": "",
                     "base_imponible": base_imponible,
                     "iva": iva,
+                    "importe_total": importe_total,
                     "imageUrl": url_for('uploaded_file', filename=filename)
                 })
 
@@ -108,12 +110,14 @@ def export_to_excel():
     # Add new rows
     for row in data:
         ws.append([
-            row['filename'],
             row['fecha_factura'],
             row['numero_factura'],
-            row['importe_total'],
+            row['codigo_empresa'],
+            row['tipo_gasto'],
             row['base_imponible'],
-            row['iva']
+            row['iva'],
+            row['importe_total'],
+            row['filename']
         ])
     
     # Save the workbook
