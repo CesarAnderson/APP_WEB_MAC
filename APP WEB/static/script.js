@@ -12,7 +12,8 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedFilesCount: document.getElementById('selectedFilesCount'),
         editModeSwitch: document.getElementById('editModeSwitch'),
         exportToExcelBtn: document.getElementById('exportToExcelBtn'),
-        agregarFilaBtn: document.getElementById('agregarFilaBtn')
+        agregarFilaBtn: document.getElementById('agregarFilaBtn'),
+        openExcelBtn: document.getElementById('openExcelBtn')
     };
 
     let resultados = [];
@@ -82,6 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.loadingSpinner.classList.add('hidden');
         mostrarResultados(resultados);
         elements.exportToExcelBtn.classList.remove('hidden');
+        elements.openExcelBtn.classList.remove('hidden');
     }
 
     async function procesarArchivo(archivo) {
@@ -132,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.resultadosContainer.appendChild(tabla);
         mostrarMensaje('Procesamiento completado', 'success');
         elements.exportToExcelBtn.classList.remove('hidden');
+        elements.openExcelBtn.classList.remove('hidden');
         elements.agregarFilaBtn.classList.remove('hidden');
     }
 
@@ -151,6 +154,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.onchange = (e) => {
                     resultados[index][field] = e.target.value;
                 };
+
+                // Aplicar formato de fecha
+                if (field === 'fecha_factura') {
+                    input.addEventListener('blur', (e) => {
+                        const valor = e.target.value;
+                        if (/^\d{4}$/.test(valor)) {
+                            const dia = valor.substring(0, 2);
+                            const mes = valor.substring(2, 4);
+                            const anio = new Date().getFullYear();
+                            e.target.value = `${dia}/${mes}/${anio}`;
+                            resultados[index][field] = e.target.value;
+                        }
+                    });
+                }
+
+                // Aplicar formato decimal para campos numéricos
+                if (['base_imponible', 'iva', 'importe_total'].includes(field)) {
+                    input.addEventListener('blur', (e) => {
+                        const valor = e.target.value.replace(',', '.');
+                        if (!isNaN(parseFloat(valor))) {
+                            e.target.value = parseFloat(valor).toLocaleString('es-ES', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                            resultados[index][field] = e.target.value;
+                        }
+                    });
+                }
+
                 cell.appendChild(input);
             } else {
                 cell.textContent = item[field] || '-';
@@ -194,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mostrarResultados(resultados);
         }
         elements.exportToExcelBtn.classList.remove('hidden');
+        elements.openExcelBtn.classList.remove('hidden');
     }
 
     function mostrarMensaje(mensaje, tipo) {
@@ -232,6 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     elements.exportToExcelBtn.addEventListener('click', exportarAExcel);
+    elements.openExcelBtn.addEventListener('click', abrirExcel);
 
     async function exportarAExcel() {
         try {
@@ -245,12 +279,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 mostrarMensaje('Datos exportados a Excel exitosamente', 'success');
+                elements.openExcelBtn.classList.remove('hidden');
             } else {
                 mostrarMensaje('Error al exportar a Excel', 'error');
             }
         } catch (error) {
             console.error('Error:', error);
             mostrarMensaje('Error al exportar a Excel', 'error');
+        }
+    }
+
+    async function abrirExcel() {
+        try {
+            const response = await fetch('/open-excel', {
+                method: 'GET',
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.success) {
+                    mostrarMensaje('Archivo Excel abierto exitosamente', 'success');
+                } else {
+                    mostrarMensaje('No se pudo abrir el archivo Excel', 'error');
+                }
+            } else {
+                mostrarMensaje('Error al intentar abrir el archivo Excel', 'error');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            mostrarMensaje('Error al intentar abrir el archivo Excel', 'error');
         }
     }
 });

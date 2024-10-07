@@ -7,11 +7,15 @@ from io import BytesIO
 from werkzeug.utils import secure_filename
 import openpyxl
 from openpyxl import load_workbook
+import subprocess
+import platform
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+EXCEL_FILE = 'Facturas.xlsx'
 
 genai.configure(api_key="AIzaSyANGD5y7dErSN4FhDZdM0_rfUtBFB-8iR8")
 model = genai.GenerativeModel("gemini-1.5-flash-001")
@@ -100,12 +104,15 @@ def uploaded_file(filename):
 def export_to_excel():
     data = request.json
     
-    # Load the existing Excel file
-    wb = load_workbook('Facturas.xlsx')
-    ws = wb['Hoja1']
-    
-    # Find the last row with data
-    last_row = ws.max_row
+    # Load the existing Excel file or create a new one if it doesn't exist
+    try:
+        wb = load_workbook(EXCEL_FILE)
+        ws = wb['Hoja1']
+    except FileNotFoundError:
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Hoja1'
+        ws.append(['Fecha', 'Número', 'Codigo Empresa', 'Tipo de Gasto', 'Base Imponible', 'IVA', 'Importe', 'Archivo'])
     
     # Add new rows
     for row in data:
@@ -121,9 +128,25 @@ def export_to_excel():
         ])
     
     # Save the workbook
-    wb.save('Facturas.xlsx')
+    wb.save(EXCEL_FILE)
     
     return jsonify({"message": "Data exported successfully"}), 200
+
+@app.route('/open-excel', methods=['GET'])
+def open_excel():
+    if not os.path.exists(EXCEL_FILE):
+        return jsonify({"success": False, "message": "Excel file does not exist"}), 404
+
+    try:
+        if platform.system() == "Windows":
+            os.startfile(EXCEL_FILE)
+        elif platform.system() == "Darwin":  # macOS
+            subprocess.call(('open', EXCEL_FILE))
+        else:  # Linux and other Unix-like
+            subprocess.call(('xdg-open', EXCEL_FILE))
+        return jsonify({"success": True, "message": "Excel file opened successfully"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error opening Excel file: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=8080)

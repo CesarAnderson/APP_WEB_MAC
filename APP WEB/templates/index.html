@@ -36,14 +36,19 @@
             <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
             <p class="mt-2 text-gray-600">Procesando archivos...</p>
         </div>
-        <div id="resultadosContainer" class="mt-6"></div>
+        <div id="resultadosContainer" class="mt-6 overflow-x-auto"></div>
         <div class="mt-4 flex justify-between">
-            <button id="agregarFilaBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded transition duration-300">
+            <button id="agregarFilaBtn" class="bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded transition duration-300 hidden">
                 Agregar Fila
             </button>
-            <button id="exportToExcelBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300 hidden">
-                Exportar a Excel
-            </button>
+            <div>
+                <button id="exportToExcelBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded transition duration-300 mr-2 hidden">
+                    Exportar a Excel
+                </button>
+                <button id="openExcelBtn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded transition duration-300 hidden">
+                    Abrir Excel
+                </button>
+            </div>
         </div>
     </div>
     <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
