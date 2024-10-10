@@ -13,11 +13,15 @@ document.addEventListener('DOMContentLoaded', () => {
         editModeSwitch: document.getElementById('editModeSwitch'),
         exportToExcelBtn: document.getElementById('exportToExcelBtn'),
         agregarFilaBtn: document.getElementById('agregarFilaBtn'),
-        openExcelBtn: document.getElementById('openExcelBtn')
+        openExcelBtn: document.getElementById('openExcelBtn'),
+        modalImageName: document.getElementById('modalImageName'),
+        imageInfo: document.getElementById('imageInfo'),
+        imageContainer: document.getElementById('imageContainer')
     };
 
     let resultados = [];
     let editMode = false;
+    let currentImageIndex = -1;
 
     // Drag and drop functionality
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -61,14 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.agregarFilaBtn.addEventListener('click', agregarFila);
 
     async function handleFileUpload() {
-        const archivos = elements.imagenInput.files;
+        const archivos = Array.from(elements.imagenInput.files).slice(0, 15);
         if (archivos.length === 0) {
             mostrarMensaje('Por favor, seleccione al menos un archivo.', 'error');
             return;
         }
 
         const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf'];
-        const invalidFiles = Array.from(archivos).filter(file => !validTypes.includes(file.type));
+        const invalidFiles = archivos.filter(file => !validTypes.includes(file.type));
         if (invalidFiles.length > 0) {
             mostrarMensaje(`Tipos de archivo no válidos: ${invalidFiles.map(f => f.name).join(', ')}`, 'error');
             return;
@@ -78,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.loadingSpinner.classList.remove('hidden');
         elements.resultadosContainer.innerHTML = '';
 
-        resultados = await Promise.all(Array.from(archivos).map(procesarArchivo));
+        resultados = await Promise.all(archivos.map(procesarArchivo));
 
         elements.loadingSpinner.classList.add('hidden');
         mostrarResultados(resultados);
@@ -142,89 +146,51 @@ document.addEventListener('DOMContentLoaded', () => {
         const row = document.createElement('tr');
         row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
 
-        const fields = ['fecha_factura', 'numero_factura', 'codigo_empresa', 'tipo_gasto', 'base_imponible', 'iva', 'importe_total'];
-        
-        fields.forEach(field => {
+        const campos = [
+            { key: 'fecha_factura', type: 'date' },
+            { key: 'numero_factura', type: 'text' },
+            { key: 'codigo_empresa', type: 'text' },
+            { key: 'tipo_gasto', type: 'text' },
+            { key: 'base_imponible', type: 'number' },
+            { key: 'iva', type: 'number' },
+            { key: 'importe_total', type: 'number' }
+        ];
+
+        campos.forEach(campo => {
             const cell = row.insertCell();
+            cell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
             if (editMode) {
                 const input = document.createElement('input');
-                input.type = 'text';
-                input.value = item[field] || '';
-                input.className = 'w-full px-2 py-1 border rounded';
-                input.onchange = (e) => {
-                    resultados[index][field] = e.target.value;
-                };
-
-                // Aplicar formato de fecha
-                if (field === 'fecha_factura') {
-                    input.addEventListener('blur', (e) => {
-                        const valor = e.target.value;
-                        if (/^\d{4}$/.test(valor)) {
-                            const dia = valor.substring(0, 2);
-                            const mes = valor.substring(2, 4);
-                            const anio = new Date().getFullYear();
-                            e.target.value = `${dia}/${mes}/${anio}`;
-                            resultados[index][field] = e.target.value;
-                        }
-                    });
-                }
-
-                // Aplicar formato decimal para campos numéricos
-                if (['base_imponible', 'iva', 'importe_total'].includes(field)) {
-                    input.addEventListener('blur', (e) => {
-                        const valor = e.target.value.replace(',', '.');
-                        if (!isNaN(parseFloat(valor))) {
-                            e.target.value = parseFloat(valor).toLocaleString('es-ES', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            });
-                            resultados[index][field] = e.target.value;
-                        }
-                    });
-                }
-
-                // Agregar funcionalidad Alt+Enter
-                if (field === 'importe_total') {
-                    input.addEventListener('keydown', (e) => {
-                        if (e.altKey && e.key === 'Enter') {
-                            e.preventDefault();
-                            agregarFila();
-                            // Encuentra la primera celda de la nueva fila y enfócala
-                            const nuevaFila = row.nextElementSibling;
-                            if (nuevaFila) {
-                                const primerInput = nuevaFila.querySelector('input');
-                                if (primerInput) {
-                                    primerInput.focus();
-                                }
-                            }
-                        }
-                    });
-                }
-
+                input.type = campo.type;
+                input.value = item[campo.key] || '';
+                input.className = 'w-full border-gray-300 rounded-md';
+                input.addEventListener('change', (e) => {
+                    item[campo.key] = e.target.value;
+                });
                 cell.appendChild(input);
             } else {
-                cell.textContent = item[field] || '-';
+                cell.textContent = item[campo.key] || '';
             }
-            cell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
         });
 
-        const celdaNombre = row.insertCell();
+        const fileCell = row.insertCell();
+        fileCell.className = 'px-6 py-4 whitespace-nowrap text-sm font-medium';
         const link = document.createElement('a');
-        link.textContent = item.filename || '-';
-        link.className = 'text-blue-600 hover:text-blue-900 cursor-pointer';
-        link.onclick = () => item.imageUrl ? mostrarImagen(item) : null;
-        celdaNombre.appendChild(link);
+        link.href = '#';
+        link.className = 'text-indigo-600 hover:text-indigo-900';
+        link.textContent = item.filename;
+        link.onclick = () => item.imageUrl ? mostrarImagen(index) : null;
+        fileCell.appendChild(link);
 
-        const estadoCell = row.insertCell();
-        estadoCell.textContent = item.error ? 'Error' : (item.manuallyAdded ? 'Manual' : 'Procesado');
-        estadoCell.className = `px-6 py-4 whitespace-nowrap text-sm ${item.error ? 'text-red-500' : (item.manuallyAdded ? 'text-blue-500' : 'text-green-500')}`;
+        const statusCell = row.insertCell();
+        statusCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-500';
+        statusCell.textContent = item.error ? 'Error' : 'Procesado';
 
         return row;
     }
 
     function agregarFila() {
         const nuevaFila = {
-            filename: '',
             fecha_factura: '',
             numero_factura: '',
             codigo_empresa: '',
@@ -232,7 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
             base_imponible: '',
             iva: '',
             importe_total: '',
-            manuallyAdded: true
+            filename: 'Nueva fila',
+            imageUrl: ''
         };
         resultados.push(nuevaFila);
         const tabla = elements.resultadosContainer.querySelector('table');
@@ -262,11 +229,84 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.mensajeExito.classList.remove('hidden');
     }
 
-    function mostrarImagen(item) {
-        elements.modalImage.src = item.imageUrl || '';
-        elements.modalImage.alt = item.filename;
-        elements.imageModal.classList.remove('hidden');
-        elements.imageModal.classList.add('flex');
+    function mostrarImagen(index) {
+        if (index >= 0 && index < resultados.length) {
+            currentImageIndex = index;
+            const item = resultados[index];
+            elements.modalImage.src = item.imageUrl || '';
+            elements.modalImage.alt = item.filename;
+            elements.modalImageName.textContent = item.filename;
+            elements.imageModal.classList.remove('hidden');
+            elements.imageModal.classList.add('flex');
+            
+            mostrarInfoImagen(item);
+
+            // Ajustar la imagen al ancho disponible
+            elements.modalImage.style.maxWidth = '100%';
+            elements.modalImage.style.height = 'auto';
+        }
+    }
+
+    function mostrarInfoImagen(item) {
+        elements.imageInfo.innerHTML = '';
+        
+        const campos = [
+            { nombre: 'Fecha', valor: item.fecha_factura },
+            { nombre: 'Número', valor: item.numero_factura },
+            { nombre: 'Codigo Empresa', valor: item.codigo_empresa },
+            { nombre: 'Tipo de Gasto', valor: item.tipo_gasto },
+            { nombre: 'Base Imponible', valor: item.base_imponible },
+            { nombre: 'IVA', valor: item.iva },
+            { nombre: 'Importe', valor: item.importe_total }
+        ];
+
+        campos.forEach(campo => {
+            const div = document.createElement('div');
+            div.className = 'mb-4';
+            const label = document.createElement('label');
+            label.textContent = campo.nombre;
+            label.className = 'block text-sm font-bold mb-1';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = campo.valor || '';
+            input.className = 'w-full border rounded px-2 py-1';
+            input.addEventListener('change', (e) => actualizarCampo(item, campo.nombre, e.target.value));
+            div.appendChild(label);
+            div.appendChild(input);
+            elements.imageInfo.appendChild(div);
+        });
+    }
+
+    function actualizarCampo(item, campo, valor) {
+        const campoMapeado = {
+            'Fecha': 'fecha_factura',
+            'Número': 'numero_factura',
+            'Codigo Empresa': 'codigo_empresa',
+            'Tipo de Gasto': 'tipo_gasto',
+            'Base Imponible': 'base_imponible',
+            'IVA': 'iva',
+            'Importe': 'importe_total'
+        }[campo];
+
+        if (campoMapeado) {
+            item[campoMapeado] = valor;
+            mostrarResultados(resultados);
+        }
+    }
+
+    function navegarImagen(direccion) {
+        let newIndex = currentImageIndex + direccion;
+        if (newIndex < 0) newIndex = resultados.length - 1;
+        if (newIndex >= resultados.length) newIndex = 0;
+        mostrarImagen(newIndex);
+    }
+
+    function navegarImagenDerecha() {
+        navegarImagen(1);
+    }
+
+    function navegarImagenIzquierda() {
+        navegarImagen(-1);
     }
 
     function cerrarModal() {
@@ -282,8 +322,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !elements.imageModal.classList.contains('hidden')) {
-            cerrarModal();
+        if (!elements.imageModal.classList.contains('hidden')) {
+            switch (e.key) {
+                case 'Escape':
+                    cerrarModal();
+                    break;
+                case 'ArrowRight':
+                case 'ArrowDown':
+                    navegarImagenDerecha();
+                    break;
+                case 'ArrowLeft':
+                case 'ArrowUp':
+                    navegarImagenIzquierda();
+                    break;
+            }
         }
     });
 
