@@ -10,6 +10,7 @@ from openpyxl import load_workbook
 import subprocess
 import platform
 
+
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -59,7 +60,7 @@ def index():
 
             try:
                 prompt = [
-                    genai.protos.Part(text="Extrae el número de factura, la fecha de la factura en formato dd/mm/yyyy, el importe total, la base imponible y el valor del porcentaje del IVA (no quiero el importe del IVA entiende). Devuelve los resultados separados por punto y coma en este orden: numerodefactura;fechadefactura;importetotal;baseimponible;iva"),
+                    genai.protos.Part(text="Extrae el número de factura, la fecha de la factura en formato dd/mm/yyyy, el importe total, la base imponible y el valor del porcentaje del IVA (no quiero el importe del IVA, quiero el valor porcentual del iva). Devuelve los resultados separados(los valores numericos deben ser decimales separados por coma) por punto y coma en este orden: numerodefactura;fechadefactura;importetotal;baseimponible;iva"),
                     genai.protos.Part(inline_data=genai.protos.Blob(mime_type='image/jpeg', data=image_bytes))
                 ]
                 response = model.generate_content(prompt)
