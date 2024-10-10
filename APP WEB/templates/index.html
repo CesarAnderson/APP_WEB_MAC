@@ -52,12 +52,20 @@
         </div>
     </div>
     <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-        <div class="bg-white p-4 rounded-lg max-w-3xl max-h-full overflow-auto relative">
-            <img id="modalImage" src="" alt="Imagen ampliada" class="max-w-full h-auto">
+        <div class="bg-white rounded-lg w-full max-w-7xl h-full max-h-screen flex flex-row relative">
+            <div class="flex-grow overflow-hidden relative">
+                <div id="imageContainer" class="absolute inset-0 overflow-auto">
+                    <img id="modalImage" src="" alt="Imagen ampliada" class="max-h-full">
+                </div>
+            </div>
+            <div id="imageInfo" class="w-64 p-4 overflow-y-auto bg-gray-100">
+                <!-- Los campos se agregarán dinámicamente aquí -->
+            </div>
             <button id="closeModal" class="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-2 rounded transition duration-300">
                 &times;
             </button>
         </div>
+        <p id="modalImageName" class="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-50 px-2 py-1 rounded"></p>
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
